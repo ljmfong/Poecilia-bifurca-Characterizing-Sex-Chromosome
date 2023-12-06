@@ -65,7 +65,19 @@ You can first align the short-read DNA-sequences to the Canu assembly using **[B
     bwa index ~/bifurca_project/assembly/bifurca_female.contigs.fasta
     bwa mem -t 12 ~/bifurca_project/assembly/bifurca_female.contigs.fasta ~/bifurca_project/dna_concatenated_paired_reads/bif_female_1.output_forward_paired.fq.gz ~/bifurca_project/dna_concatenated_paired_reads/bif_female_1.output_reverse_paired.fq.gz | /Linux/bin/samtools sort > Female_1_aln.bam
 
-You will use **[Pilon](https://github.com/broadinstitute/pilon)** to correct the long-read assembly.
+You will use **[Pilon](https://github.com/broadinstitute/pilon)** to correct the long-read assembly. NOTE - because the long-read assembly used a female, you should only correct the assembly with the female individuals of the short-read sequences. You will get two outputs - a correction file that will tell you what was corrected, and the female_only_pilon_assembly.fasta
+
+    export _JAVA_OPTIONS='-Xms128g -Xmx128g'
+    java11 -jar /Linux/bin/pilon.jar --genome assembly/bifurca_female.contigs.fasta --frags ~/bifurca_project/bwa_bifurca_canu/Female_1_aln.bam \
+    --frags ~/bifurca_project/bwa_bifurca_canu/Female_1_aln.bam \
+    --frags ~/bifurca_project/bwa_bifurca_canu/Female_2_aln.bam --frags ~/bifurca_project/bwa_bifurca_canu/Female_3_aln.bam \
+    --output female_only_pilon_assembly --fix all --mindepth 0.5 --changes --threads 4 >run_pilon.txt
+
+You can then use **[RagTag](https://github.com/malonge/RagTag)** to orient the scaffolds, version 2.1.0 was used. Because Pilon was used to correct the assembly, this step was skipped in the RagTag pipeline. NOTE - the first FASTA sequence is the reference, the second inputted FASTA is the query. Ensure that RagTag python scripts are modified to find the other dependent scripts based on where you installed RagTag (e.g. "/home/ljmfong/bin/bin/ragtag_agp2fa.py" on line 559).
+
+    bin/ragtag_scaffold.py ~/assemblies/PO1787_Poecilia_picta.RepeatMasked.fasta ~/bifurca_project/female_only_pilon_assembly.fasta
+    
+
 
 
 
