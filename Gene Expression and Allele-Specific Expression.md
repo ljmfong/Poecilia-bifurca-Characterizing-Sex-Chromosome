@@ -36,3 +36,129 @@ Running just trimmomatic for one file at a time:
 
 * Run FastQC on the trimmed sequences and compare results.
     
+------------------------------------------------------------------------------------------------------------------------------------
+### Building the Transcriptome
+
+#### a. Alignment with HISAT2:
+We used **[HISAT2](https://daehwankimlab.github.io/hisat2/)** for our alignment to first see how the trimmed RNA sequences aligned to the draft genome. You will first need to build an index, then align - Example comamand:
+
+     /Linux/bin/hisat2-build -f 05.ragtag_output/ragtag_scaffolds_only.fasta 05.ragtag_output/bifurca_ragtag_scaffolds_only 
+     /Linux/bin/hisat2 05.ragtag_output/bifurca_ragtag_scaffolds_only -1 sample_R1_001.output_forward_paired.fq.gz -2 sample_R2_001.output_reverse_paired.fq.gz --phred33 -q -p 12 --no-discordant --no-mixed --no-unal --dta -S sample_hisat2.sam --met-file sample_hisat2.met --summary-file sample_hisat2_summary.txt
+
+#### b. Constructring _de novo_ assembly
+
+**[Trinity](https://github.com/trinityrnaseq/trinityrnaseq/wiki)**: Build _de novo_ assembly. Trinity has a three step-process (Inchworm, Chrysalis, and Butterfly), some of the steps can take a long time. It is recommended to build the assembly in steps.
+
+* Make a tab-delimited file that includes all trimmed forward and reverse sample file names (together with their paths). This will ensure that all samples are used to create the assembly. File should be of the format: 
+    sample_name \t sample_forward.fq.gz \t sample_reverse.fq.gz 
+
+Then run:
+*  Inchworm step:
+
+
+      trinity2.11.0/Trinity --seqType fq --samples_file picta_reads.txt --CPU 32 --normalize_max_read_cov 50 --max_memory 1500G --no_run_chrysalis >trinity_normalization_inchworm.txt
+      
+*  Chrysalis step:
+
+
+      trinity2.11.0/Trinity --seqType fq --samples_file picta_reads.txt --CPU 32 --normalize_max_read_cov 50 --max_memory 1500G --no_distributed_trinity_exec >trinity_chrysalis.txt
+      
+*  Butterfly step:
+
+
+      trinity2.11.0/Trinity  --seqType fq --samples_file picta_reads.txt --CPU 32 --max_memory 1500G >trinity_full.txt
+
+Note the Trinity output format. You will get a '**[Trinity.fasta](https://github.com/trinityrnaseq/trinityrnaseq/wiki/Output-of-Trinity-Assembly)**' output in a new 'trinity_out_dir/' that is created when Trinity is run. Trinity clusters transcripts loosely into 'genes' and contains 'isoforms' of those genes. Custom script is used to determine assembly statistics (**03.assembly_stats.py**). Script takes the trinity output folder, searches for the assembly fasta file and calculates basic stats.
+
+    python 03.assembly_stats.py trinity_out_dir/
+
+
+
+#### c. Filtering Transcriptome 
+Steps to filter transcriptome, removing redundancy,non-coding RNA and transcripts without an open reading frame
+
+**[RSEM](https://deweylab.github.io/RSEM/)** & **[Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) Using Trinity Scripts**: Map reads to the _de novo_ transcriptome. 
+Trinity has scripts that measure gene expression (RSEM) of reads and aligns them to the _de novo_ assembly (Bowtie2). These scripts can be found in the 'util' directory when Trinity is installed. However, both softwards must be installed and their PATH must be set in order to run the Trinity scripts. Run the following scripts:
+* Prepare reference for alignment and abundance estimation:
+
+        trinity2.11.0/util/align_and_estimate_abundance.pl --transcripts trinity_out_dir/Trinity.fasta --est_method RSEM --aln_method bowtie2 --trinity_mode --prep_reference >prep_rsem_reference.txt
+        
+* Run alignment and abundance esetimation: Example command:
+
+        trinity2.11.0/util/align_and_estimate_abundance.pl --transcripts trinity_out_dir/Trinity.fasta --seqType fq --left suriname_picta/Trimmed_Reads/T1-Dame_R1_098.output_forward_paired_50bp.fastq.gz --right suriname_picta/Trimmed_Reads/T1-Dame_R2_098.output_reverse_paired_50bp.fastq.gz --est_method RSEM --aln_method bowtie2 --trinity_mode --output_dir picta_rsem/T1-Dame/ --bowtie2_RSEM '--no-mixed --no-discordant --gbar 1000 --end-to-end -k 200 --phred33-quals' >T1-Dame-trinity-rsem.txt 2>T1-Dame-trinity-rsem-alignment.txt
+
+
+Custom scripts are used to filter transcriptome to remove redundancy (**04.get-best-isoform.py** and **05.get-best-isoform-fasta.py**):
+
+        python 04.get-best-isoform.py picta_rsem/ trinity_out_dir/Trinity.fasta best_isoform.txt >04_best_isoform.txt
+        python 05.get-best-isoform-fasta.py trinity_out_dir/Trinity.fasta best_isoform.txt >05_get_best_isoform.txt
+
+It will save in the trinity_out_dir folder as Trinity.bestisoform.fa 
+
+**[BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi)**: Identify non-coding RNA (ncRNA): Download fasta file of ncRNA from closely related species from **[ENSEMBL](http://uswest.ensembl.org/index.html)** e.g. Oryzias_latipes.MEDAKA1.ncrna.fa. If using BLAST on command line, **[BLAST Commandline Manual](https://www.ncbi.nlm.nih.gov/books/NBK279690/)**.
+
+* Build BLAST index:
+
+
+        makeblastdb -in Oryzias_latipes.ASM223467v1.ncrna.fa -input_type fasta -dbtype nucl -title MEDAKA.ncrna_db -out MEDAKA.ncrna_db >make_blast.txt
+
+* BLAST transcript to ncRNA of related species:
+
+        blastn -evalue 10e-10 -db MEDAKA.ncrna_db -query trinity_out_dir/Trinity.bestisoform.fa -out trinity_bestisoform_fasta_file_MEDAKAncrna.blastout -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq"
+
+Custom scripts are used to identify top BLAST hit (**06.get-ncrna.py**) and filter the assembly (**07.filter-assembly-ncrna.py**):
+
+        python 06.get-ncrna.py trinity_bestisoform_fasta_file_MEDAKAncrna.blastout >06_id_blast_tophits.txt
+Create a new folder and put the output of the previous command (.tophits) into this folder.
+
+        python 07.filter-assembly-ncrna.py picta_blast_tophits/ trinity_out_dir/Trinity.bestisoform.fa >07_filter_assembly.txt
+
+This output will appear in the trinity_out_dir folder.
+
+**[Transdecoder](https://github.com/TransDecoder/TransDecoder/wiki)**: Remove transcripts without open reading frames (ORFs).
+* Extract long ORFs:
+
+        TransDecoder/TransDecoder.LongOrfs -t trinity_out_dir/Trinity.bestisoform_ncrnafiltered.fa -m 150 >extract_orfs.txt
+
+* Final coding region predictions:
+
+        TransDecoder/TransDecoder.Predict -t trinity_out_dir/Trinity.bestisoform_ncrnafiltered.fa --retain_long_orfs_length 150 >codingregion_predicts.txt 2>codingregion_predicts_2.txt
+
+
+**[CAP3](http://seq.cs.iastate.edu/cap3.html)**: Assemble contigs.
+
+        CAP3/cap3 Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cds -s 900 >cap3_assembly.txt
+        
+* Merge CAP3 singlets and contigs:
+
+        cat Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cds.cap.contigs Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cds.cap.singlets >Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap.fa
+
+
+**[BWA](http://bio-bwa.sourceforge.net/)**: Map trimmed reads to the final assembly
+* Build BWA index:
+
+        bwa index Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap.fa >bwa_index.txt
+        
+* Align reads: Example Command:
+
+        bwa aln -t 12 Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap.fa suriname_picta/Trimmed_Reads/T1-Dame_R1_098.output_forward_paired_50bp.fastq.gz >T1-Dame_forward.sai 2>T1-Dame_forward.txt
+
+* Generate SAM format: Example Command:
+
+        bwa sampe -r "@RG\tID:sample_name" Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap.fa sample_forward.sai sample_reverse.sai sample_forward_paired.fastq.gz sample_reverse_paired.fastq.gz >sample_sampe.sam 2>sample_sampe.txt
+
+
+**[SAMtools](http://www.htslib.org/doc/samtools.html)**: Convert SAMs to BAMs
+* Build index:
+
+        samtools faidx Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap.fa
+        
+* Compress into BAM files: Example Command:
+
+        samtools view -t Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap.fa.fai -F 4 -h -S -b -o sample_sampe.bam sample_sampe.sam
+        
+* Order individual BAM files: Example Command:
+
+        samtools sort -o sample.sorted sample_sampe.bam
+
+
