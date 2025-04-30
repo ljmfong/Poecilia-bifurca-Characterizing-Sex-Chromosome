@@ -1,6 +1,8 @@
 ## Building the Transcriptome and finding Allele-Specific Expression (ASE)
 
+I used a combination of building my own transcriptome using **[Trinity](https://github.com/trinityrnaseq/trinityrnaseq/wiki)** to compare gene content of _P. bifurca_ to _P. picta_. I also aligned my RNA data to the _P. picta_ transcriptome reference as it is more complete with annotations and to be able to compare between species.
 
+------------------------------------------------------------------------------------------------------------------------------------
 #### a. Checking RNA quality 
 **[FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)**: 
 Make a text file with the pathway & name to all the files you want to QC (see bifurca_rna_samples.txt for an example - ensure there is a space after each line so FASTQC knows to read each file independently): Make an output folder for your fastqcs:
