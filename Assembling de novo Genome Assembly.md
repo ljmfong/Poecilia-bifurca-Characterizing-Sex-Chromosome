@@ -77,12 +77,30 @@ You can then use **[RagTag](https://github.com/malonge/RagTag)** to orient the s
 
     bin/ragtag_scaffold.py ~/assemblies/PO1787_Poecilia_picta.RepeatMasked.fasta ~/bifurca_project/female_only_pilon_assembly.fasta
     
+* Once I ran RagTag, my final genome assembly was ragtag.scaffold.fasta
+
+###  c. BUSCO:
+
+You can check the completeness of your assembly using **[BUSCO](https://busco.ezlab.org/)**. For our assembly, we choose to use the cyprinodontiformes_odb10 from BUSCO. Once installed, you can run the program using the following command:
+
+    busco -i ragtag.scaffold.fasta -l cyprinodontiformes_odb10 -o ragtag_busco -m genome
+
+If you are resuming a run:
+
+    busco -i ragtag.scaffold.fasta -l cyprinodontiformes_odb10 -o ragtag_busco -m genome -r
+
+If you are forcing a new run:
+
+    busco -i ragtag.scaffold.fasta-l cyprinodontiformes_odb10 -o ragtag_busco -m genome -f
 
 
+###  d. Earl Grey Pipeline for repetitive elements in your genome assembly:
 
+We followed **[Earl Grey](https://github.com/TobyBaril/EarlGrey)** following default commands, which is a succinct pipeline that allows you to run a set of programs using one line, and outputs the visuals for you once installed correctly onto your computer. This will take a few days to run, depending on the repeat content of your genome and the size. Example command:
 
+    earlGrey -g ragtag.scaffold.fasta -t 10 -s bifurca_ragtag_scaffold -o . &> run_earlGrey.log &
 
-
+    
 
 
 
