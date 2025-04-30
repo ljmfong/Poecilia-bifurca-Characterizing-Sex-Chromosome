@@ -1,6 +1,6 @@
 ## Assembling the _de novo_ Genome Assembly
 
-This pipeline will build the _de novo_ genome assembly from the PacBio Sequencing and Illumina DNA-sequencing.
+This pipeline will build the _de novo_ genome assembly from the PacBio Sequencing and Illumina DNA-sequencing. Scripts used in this pipeline can be found under the following folder:
 
 ------------------------------------------------------------------------------------------------------------------------------------
 ###  a. PacBio:
