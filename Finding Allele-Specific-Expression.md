@@ -4,3 +4,74 @@ This pipeline finds the ASE for males and females of P. bifurca, aligning the RN
 ------------------------------------------------------------------------------------------------------------------------------------
 ### a. Getting SNP data from the RNA sequence
 
+we used **[STAR](https://hbctraining.github.io/Intro-to-rnaseq-hpc-O2/lessons/03_alignment.html)** to align our RNA sequence to the _P. picta_ female reference genome. First build an index then align - example command:
+
+    /Linux/STAR-2.7.11b/bin/STAR --runThreadN 16 --runMode genomeGenerate --genomeDir ref_dir/ --genomeFastaFiles Poecilia_picta_female_genome.fasta --sjdbGTFfile PO1787_Poecilia_picta.annotation.gff --sjdbOverhang 100 --genomeSAindexNbases 12
+    /Linux/STAR-2.7.11b/bin/STAR --genomeDir ref_dir/ --runThreadN 16 --outSAMattrRGline ID:Sample1 --outFilterMultimapNmax 1 --readFilesCommand zcat --readFilesIn sample_R1_001.output_forward_paired.fq.gz sample_R2_001.output_reverse_paired.fq.gz --outFileNamePrefix sample_
+
+Then use SAMtools to convert and sort your SAM file:
+
+    /Linux/bin/samtools sort -o sample.bam.sorted sample_Aligned.out.sam
+
+### b. Making your VCF file and SNPs: 
+
+After aligning all your samples, make a VCF file and filter it using SAMtools _mpileup_ and **[VarScan](https://varscan.sourceforge.net/)**. For sake of ease, make a .txt file that contains all the pathways to your aligned and sorted BAM files. Do this separately for males and females
+
+    /Linux/bin/samtools mpileup -f Poecilia_picta_female_genome.fasta -b list_of_females_sortedbams_full_pathway.txt -o female_unfiltered.vcf
+    /usr/bin/java -jar ~/bin/VarScan.v2.3.9.jar mpileup2snp female_unfiltered.vcf --min-coverage 2 --min-ave-qual 20 --min-freq-for-hom 0.90 --p-value 1 --strand-filter 0 -—min-var-free 1e-10 --output-vcf 1 > female_VarScan_filtered.vcf
+        /Linux/bin/samtools mpileup -f Poecilia_picta_female_genome.fasta -b list_of_females_sortedbams_full_pathway.txt -o male_unfiltered.vcf
+    /usr/bin/java -jar ~/bin/VarScan.v2.3.9.jar mpileup2snp female_unfiltered.vcf --min-coverage 2 --min-ave-qual 20 --min-freq-for-hom 0.90 --p-value 1 --strand-filter 0 -—min-var-free 1e-10 --output-vcf 1 > male_VarScan_filtered.vcf
+
+### c. Filtering for ASE SNPs:
+
+After the initial quality filtering, you will want to use specific filtering steps to isolate out ASE SNPs. First, you will want to remove SNP clusters, then remove triallelic SNPs. Do this for males and females separately, I will only include examples for the female files:
+
+    /Linux/bin/python3 python3_exclude-snp-clusters.py female_VarScan_filtered.vcf -l 75 -m 5
+    /Linux/bin/python3 python3_other_filter.py Aemale_VarScan_filtered_noclusters.vcf females_only_VarScan_allotherfilters.vcf
+
+Check the initial major allele ratio/major allele frequency (MAF) distribution and initial set of ASE SNPs:
+
+    /Linux/bin/python3 average_major_allele_fraction_distribution.py females_only_VarScan_allotherfilters.vcf female_all_filtered_maf_distribution.txt
+    /Linux/bin/python3 find_snps_ase.py females_only_VarScan_allotherfilters.vcf females_aseinfo.txt females_ref_density.txt
+    /Linux/bin/python3 get_vcf.py females_aseinfo.txt females_only_VarScan_allotherfilters.vcf female_findase_initial.vcf
+    /Linux/bin/python3 average_major_allele_fraction_distribution.py female_findase_initial.vcf findase_female_all_filtered_maf_distribution.txt
+
+Find the genes with consistent ASE SNPs:
+
+    /Linux/bin/python3 consistent_ase.py females_aseinfo.txt females_consistentase.txt 
+    /Linux/bin/python3 get_vcf.py females_consistentase.txt females_only_VarScan_allotherfilters.vcf female_consistentase.vcf
+    /Linux/bin/python3 average_major_allele_fraction_distribution.py female_consistentase.vcf consistentase_female_all_filtered_maf_distribution.txt
+
+Do the p-value checks (binomial test):
+
+    /Linux/bin/python3 extract_pvalues.py females_aseinfo.txt female_pvalues.txt
+
+Do false discovery rates (FDR) following the fdr.Rscript and obtain the adjusted p-values (pvaladj) from this file. It will be easier to keep track of the correct files if you put them in their own directories:
+
+    /Linux/bin/python3 extract_pvaluesadj.py females_aseinfo.txt females_list_pvaluesadj.txt females_pvaladj_aseinfo.txt
+
+Convert this information back to VCF and then get your new consistent ASE information then MAF distributions:
+
+    /Linux/bin/python3 get_vcf.py females_pvaladj_aseinfo.txt females_only_VarScan_allotherfilters.vcf pvaladj_files/female_consistentase_pvaladj.vcf
+    /Linux/bin/python3 find_snps_ase.py pvaladj_files/female_consistentase_pvaladj.vcf pvaladj_files/females_aseinfo.txt pvaladj_files/females_ref_density.txt
+    /Linux/bin/python3 consistent_ase.py pvaladj_files/females_aseinfo.txt pvaladj_files/females_consistentase.txt 
+    /Linux/bin/python3 get_vcf.py pvaladj_files/females_consistentase.txt females_only_VarScan_allotherfilters.vcf pvaladj_files/female_final.vcf
+    /Linux/bin/python3 average_major_allele_fraction_distribution.py pvaladj_files/female_final.vcf pvaladj_files/final_female_all_filtered_maf_distribution.txt
+
+Final plots were made using Rscripts.    
+
+    
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
