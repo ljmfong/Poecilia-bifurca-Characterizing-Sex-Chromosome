@@ -52,9 +52,37 @@ Converting the map.sorted files into profiles requires **[sam2pro](http://guanin
     ~/bin/inspectPro_0.3/InspectPro_0.3/inspectPro ~/bifurca_project/08.SNP_density/formatted_profiles/bif_female_1_profileDb.sum | head #This means that profile 0 was found 856,448 times and consists of 4 Ts, and so on.
     ~/bin/inspectPro_0.3/InspectPro_0.3/inspectPro bif_female_1_profileDb.sum | tail -n +2 | sort -n -k 2 -r | head #This will tell you which profile was found most frequently, type
     
-Get the names (genes) with the SNP information - see **[Building the Transcriptome.md]()** for more information:
+Get the names (genes) with the SNP information - see **[Building the Transcriptome.md](https://github.com/ljmfong/Poecilia-bifurca-Characterizing-Sex-Chromosome/blob/main/Building%20the%20Transcriptome.md)** for more information. You will need to get the coverage threshold:
 
-   /Linux/bin/python 08.create_coord_file.py count_extractions/bifurca_gene_position.txt Trinity... gene_coordinates.txt
+   /Linux/bin/python 08.create_coord_file.py count_extractions/bifurca_gene_position.txt Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap_nogaps.gtf gene_coordinates.txt
+   grep ">" bif_female_1_bowtie.map.sorted.pro  > bif_female_1_bowtie.map.sorted.pro.list
+   cat bif_female_1_bowtie.map.sorted.pro | awk '(($2+$3+$4+$5)>10 || /Scaffold/ )' bif_female_1_bowtie.map.sorted.pro.sites10
+   cat bif_female_1_bowtie.map.sorted.pro.sites10 | awk '(($2+$3+$4+$5)>10 || /Scaffold/ )' | awk '( /Scaffold/ || ($2>(0.3*($2+$3+$4+$5)) && ($3>(0.3*($2+$3+$4+$5)))) || ($2>(0.3*($2+$3+$4+$5)) && ($4>(0.3*($2+$3+$4+$5)))) || ($2>(0.3*($2+$3+$4+$5)) && ($5>(0.3*($2+$3+$4+$5)))) || ($3>(0.3*($2+$3+$4+$5)) && ($4>(0.3*($2+$3+$4+$5)))) || ($3>(0.3*($2+$3+$4+$5)) && ($5>(0.3*($2+$3+$4+$5)))) || ($4>(0.3*($2+$3+$4+$5)) && ($5>(0.3*($2+$3+$4+$5))))    )' > bif_female_1_bowtie.map.sorted.pro.sites10.SNP30
+   sed -i 's/[>]//g' bif_female_1_bowtie.map.sorted.pro.sites10.SNP30
+   sed -i 's/[>]//g' bif_female_1_bowtie.map.sorted.pro.sites10
+   
+Everything needs to be a path (directories) in the following script and samples should also be in their own directories, e.g.:
+Move bif_female_1_bowtie.map.sorted.pro.list to scaffold_names; Move bif_female_1_bowtie.map.sorted.pro.sites10 to cov_thresh; move bif_male_3_bowtie.map.sorted.pro.sites10.SNP30 to maf
+
+    mkdir scaffold_names
+    mkdir cov_thresh
+    mkdir maf
+    mkdir extract_snp_genes
+    /Linux/bin/python ~09.extract_SNPs_genes_sampleseparate.py scaffold_names/ cov_thresh/ maf/ gene_coordinates.txt extract_snp_genes/
+    mkdir extract_snp_genes/males 
+    mkdir extract_snp_genes/females
+    # Move the outputted files into the respetive directories
+    mkdir extract_snp_genes/males_bygene_serial
+    mkdir extract_snp_genes/females_bygene_serial
+    /Linux/bin/python 2.extract_SNPdensity.1.bygene.serial.py extract_snp_genes/males extract_snp_genes/males_bygene_serial
+    
+For convenience, you can also rename the Scaffolds to the respective Linkage Group (LG) numbers then calculate fold change:
+
+    /Linux/bin/python L00.convert_scaffold_toLG.py  count_extractions/bifurca_gene_position.txt scaffold_to_LG.txt
+    mkdir foldchange/
+    /Linux/bin/python 11.bifurca_calculate_foldchange.bygene.py extract_snp_genes/females_bygene_serial/Femalegenome.males.genesgtffiltered.1.bygene extract_snp_genes/males_bygene_serial/Femalegenome.males.genesgtffiltered.1.bygene foldchange/ scaffold_to_LG.txt
+
+Use the Rscript to make a density plot    
 
 
 ------------------------------------------------------------------------------------------------------------------------------------
