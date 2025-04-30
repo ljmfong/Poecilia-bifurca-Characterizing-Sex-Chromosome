@@ -162,3 +162,25 @@ This output will appear in the trinity_out_dir folder.
         samtools sort -o sample.sorted sample_sampe.bam
 
 
+#### d. Getting count data:
+We used **[HTSeq](https://htseq.readthedocs.io/en/release_0.11.1/count.html)** to get gene expression data, given the alignment from the RNAseq data to the Trinity assembly. Get the count data then extract the counts:
+
+    mkdir HTSeq_counts
+    /Linux/bin/htseq-count -f bam -r pos -s no sample.sorted Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap_nogaps.gtf > HTSeq_counts/sample_sorted.sam_htseqcount.txt
+    cd HTSeq_counts
+    
+    for f in *.sam_htseqcount.txt
+    do
+      subdir=${f%%.*}
+      [ ! -d "$subdir" ] && mkdir -- "$subdir"
+      mv -- "$f" "$subdir"
+    done
+
+    mkdir count_extractions
+    /Linux/bin/python 11.extract-counts.py HTSeq_counts extract_all_read_counts.txt
+    /Linux/bin/python L12.extract-counts-annotated.py extract_all_read_counts.txt Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap_nogaps.gtf count_extractions/bifurca_gene_position.txt
+    /Linux/bin/python 13.extract-gene-length.py extract_all_read_counts.txt Trinity.bestisoform_ncrnafiltered.fa.transdecoder.cap_nogaps.gtf count_extractions/bifurca_gene_length.txt
+
+Use the convert-to-RPKM.Rscript to then convert the count data to RPKM.
+
+
