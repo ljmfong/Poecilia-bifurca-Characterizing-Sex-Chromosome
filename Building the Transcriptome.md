@@ -1,4 +1,4 @@
-## Building the Transcriptome and finding Allele-Specific Expression (ASE)
+## Building the Transcriptome 
 
 I used a combination of building my own transcriptome using **[Trinity](https://github.com/trinityrnaseq/trinityrnaseq/wiki)** to compare gene content of _P. bifurca_ to _P. picta_. I also aligned my RNA data to the _P. picta_ transcriptome reference as it is more complete with annotations and to be able to compare between species.
 
