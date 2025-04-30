@@ -1,6 +1,6 @@
 ## Characterizing the Sex Chromosome in _P. bifurca_
 
-There are many different analyses that can be used to identify sex chromosomes. Here, we use a combination of male to female coverage analysis, single-nucleotide polymorphisms (SNP) density, and allele-specific expression to test for dosage compensation.
+There are many different analyses that can be used to identify sex chromosomes. Here, we use a combination of male to female coverage analysis and k-mer analysis. Scripts used in this pipeline can be found under the following folder:
 
 ------------------------------------------------------------------------------------------------------------------------------------
 
