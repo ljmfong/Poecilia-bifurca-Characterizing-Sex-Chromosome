@@ -1,6 +1,6 @@
 ## Characterizing the Sex Chromosome in _P. bifurca_
 
-There are many different analyses that can be used to identify sex chromosomes. Here, we use a combination of male to female coverage analysis and k-mer analysis. Scripts used in this pipeline can be found under the following folder:
+There are many different analyses that can be used to identify sex chromosomes. Here, we use a combination of male to female coverage analysis, single-nucleotide polymorphisms (SNP) density, and k-mer analysis. Scripts used in this pipeline can be found under the following folder:
 
 ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -29,8 +29,37 @@ You can extract the coverage using the 06.extract_coverage.py script. NOTE: You 
 
 You can then manually calculate the fold change in Excel or R, and plot using the according Rscript.
 
+------------------------------------------------------------------------------------------------------------------------------------
 
-###  b. Kmer Analysis
+###  b. SNP Analysis
+
+First we have to map using **[Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml)** the bifurca FASTq to the bifurca draft genome assmebly then sort usng SAMTools. Build an index and then run the alignment. Because Bowtie2 can't read zipped files, you may need to unzip your DNA files - example commands:
+
+    /Linux/bin/bowtie2-build -f 05.ragtag_output/ragtag_scaffolds_only.fasta 05.ragtag_output/ragtag_scaffolds_only.bowtie_index > ragtag_scaffolds_only.bowtie_index_run.txt    
+    gunzip bif_female_1.output_forward_paired.fq.gz
+    gunzip bif_female_1.output_reverse_paired.fq.gz
+    /Linux/bin/bowtie2 -q --phred33 -p 12 -x 05.ragtag_output/ragtag_scaffolds_only.bowtie_index -1 bif_female_1.output_forward_paired.fq -2 bif_female_1.output_reverse_paired.fq -S bif_female_1_bowtie.map 2> bif_female_1_bowtie_map_stats.txt
+    /Linux/bin/samtools sort bif_female_1_bowtie.map -o bif_female_1_bowtie.map.sorted
+
+Converting the map.sorted files into profiles requires **[sam2pro](http://guanine.evolbio.mpg.de/mlRho/)** and you can inspect the profiles:
+
+    /Linux/bin/samtools mpileup bif_female_1_bowtie.map.sorted | ~/bin/Sam2pro_0.8/sam2pro -c 5 > bif_female_1_bowtie.map.sorted.pro
+    ~/bin/formatPro_0.5/FormatPro_0.5/formatPro bif_female_1_bowtie.map.sorted.pro #This should result in a profileDb.con, profileDb.pos, and profileDb.sum file
+    
+    ~/bin/inspectPro_0.3/InspectPro_0.3/inspectPro bif_female_1_profileDb.con | head #Contigs are listed in this file:
+    ~/bin/inspectPro_0.3/InspectPro_0.3/inspectPro bif_female_1_profileDb.con | tail -n +2 | sort -k 2 -n -r | head #To find that the longest contig, which consists of 48,930,977 positions with a coverage >= 4
+    ~/bin/inspectPro_0.3/InspectPro_0.3/inspectPro bif_female_1_profileDb.pos | head #To find position 49 is occupied by profile 0, position 50 by profile 1
+    ~/bin/inspectPro_0.3/InspectPro_0.3/inspectPro ~/bifurca_project/08.SNP_density/formatted_profiles/bif_female_1_profileDb.sum | head #This means that profile 0 was found 856,448 times and consists of 4 Ts, and so on.
+    ~/bin/inspectPro_0.3/InspectPro_0.3/inspectPro bif_female_1_profileDb.sum | tail -n +2 | sort -n -k 2 -r | head #This will tell you which profile was found most frequently, type
+    
+Get the names (genes) with the SNP information - see **[Building the Transcriptome.md]()** for more information:
+
+   /Linux/bin/python 08.create_coord_file.py count_extractions/bifurca_gene_position.txt Trinity... gene_coordinates.txt
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+###  c. Kmer Analysis
 
 Find out how many basepairs your females and male reads contained:
 
