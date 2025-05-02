@@ -7,7 +7,7 @@ This pipeline follows the work done by **[Lin et al. 2022](https://github.com/Li
 
 ### a. Prepare aligned DNAseq files
 
-This file can be taken from the SNP step following **[Assembling de novo Genome](Assembling de novo Genome.md)**. I used **[Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml)** for these alignments and then prepared the alignment files using SAMtools. Example commands are as follows:
+This file can be taken from the SNP step following **[Assembling de novo Genome](https://github.com/ljmfong/Poecilia-bifurca-Characterizing-Sex-Chromosome/blob/main/Assembling%20de%20novo%20Genome.md)**. I used **[Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml)** for these alignments and then prepared the alignment files using SAMtools. Example commands are as follows:
 
     /Linux/samtools-1.9/bin/samtools fixmate -@ 5 -m -O bam bif_female_1_bowtie.map bif_female_1_bowtie.map.fixmate.bam
     /Linux/samtools-1.9/bin/samtools sort -o bif_female_1_bowtie.map.sorted.bam bif_female_1_bowtie.map.fixmate.bam
