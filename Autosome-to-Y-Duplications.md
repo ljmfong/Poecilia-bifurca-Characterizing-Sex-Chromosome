@@ -4,3 +4,65 @@
 This pipeline follows the work done by **[Lin et al. 2022](https://github.com/Lin-Yuying/GuppyGeneDuplication)**. Scripts can be found under:
 
 ------------------------------------------------------------------------------------------------------------------------------------
+
+### a. Prepare aligned DNAseq files
+
+This file can be taken from the SNP step following **[Assembling de novo Genome]()**. I used **[Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml)** for these alignments and then prepared the alignment files using SAMtools. Example commands are as follows:
+
+    /Linux/samtools-1.9/bin/samtools fixmate -@ 5 -m -O bam bif_female_1_bowtie.map bif_female_1_bowtie.map.fixmate.bam
+    /Linux/samtools-1.9/bin/samtools sort -o bif_female_1_bowtie.map.sorted.bam bif_female_1_bowtie.map.fixmate.bam
+    /Linux/samtools-1.9/bin/samtools markdup bif_female_1_bowtie.map.sorted.bam bif_female_1_bowtie.map.sorted_mrkdup.bam
+
+### b. Create VCF file and  process
+
+Following the file preparations, make a .txt file that contains the pahtways to your prepared BAM files and use **[BCFtools](https://samtools.github.io/bcftools/bcftools.html)** to create your VCF file and filter with **[VCFtools](https://vcftools.github.io/man_latest.html)**. Example command:
+
+    /Linux/samtools-1.9/bin/bcftools mpileup -Ou -q 20 -Q 20 --skip-indels -a FORMAT/AD,FORMAT/DP -f ragtag_scaffolds_only.fasta -b sorted_markdupe_bamlist.txt | /Linux/samtools-1.9/bin/bcftools call -mv -Oz -f GQ -o bifurca_markdupe.vcf.gz	
+    /Linux/bin/vcftools --gzvcf bifurca_markdupe.vcf.gz --maf 0.05 --mac 1 --min-alleles 2 --max-alleles 2 --max-missing 0.9 --min-meanDP 10 --max-meanDP 100 --minGQ 25 \
+--recode --recode-INFO-all --out bifurca_markdupe_filtered_noBED
+    
+#### i. To get the FST values between the sexes:
+
+To get the FST values between the sexes, make two separate .txt flies: one containing the sample names for FEMALES, and one containing sample names for MALES:
+
+    /Linux/bin/vcftools --vcf bifurca_markdupe_filtered_noBED.recode.vcf --weir-fst-pop female_individ.txt --weir-fst-pop male_individ.txt --out bifurca_markdupe_filtered.recoded_FST
+
+To get Genome-wide FST, you can you do this:
+
+    awk 'NR > 1 {sum += $3} END {print sum / (NR - 1)}' bifurca_markdupe_filtered.recoded_FST.weir.fst
+
+To get Genome-wide FST EXCLUDING the sex chromosomes:
+
+    grep -v "Scaffold_14_RagTag" bifurca_markdupe_filtered.recoded_FST.weir.fst | awk '{sum+=$3} END {print sum / NR}'
+
+To get the FST for sex chromosomes:
+
+   grep "Scaffold_14_RagTag" bifurca_markdupe_filtered.recoded_FST.weir.fst | awk '{sum+=$3} END {print sum / NR}'
+
+
+#### ii. Get the Read Depth
+
+Get the read depth for each sex separately. This will output a .ldepth file:
+
+    /Linux/bin/vcftools --vcf bifurca_markdupe_filtered_noBED.recode.vcf --site-depth --keep female_individ.txt --out female_bifurca_markdupe_filtered.cds
+    /Linux/bin/vcftools --vcf bifurca_markdupe_filtered_noBED.recode.vcf --site-depth --keep male_individ.txt --out male_bifurca_markdupe_filtered.cds
+
+Then find the M:F Read Depth and attach the corresponding FST values:
+
+    /Linux/bin/python gene_coverage.py bifurca_gene_coord.bed male_bifurca_markdupe_filtered.cds.ldepth female_bifurca_markdupe_filtered.cds.ldepth bifurca_markdupe_filtered_MFDepth.txt
+    /Linux/bin/python L00.convert_scaffold_toLG_MFDepth.py bifurca_markdupe_filtered_MFDepth.txt bifurca_LG_markdupe_filtered_MFDepth.txt
+    paste bifurca_markdupe_filtered.recoded_FST.weir.fst male_bifurca_markdupe_filtered.cds.ldepth female_bifurca_markdupe_filtered.cds.ldepth  | awk '{print $1, $2, $3, $6, $10}' > bifurca_fst_readdepth_comparison.txt
+
+  * Note that the first sum_depth = male sum depth; second sum_depth = female sum depth (will change the name accordingly in the Rscript)
+
+#### iii. Coverage per site if you had a completed annotation file:
+
+If you have a completed annotation file that has the location of the exons and you want to only look at the M:F Read Depth/M:F FST of the exonic region, you can do the following using **[BEDtools](https://bedtools.readthedocs.io/en/latest/)**. Do this for males and females separately, then look only for your putative genes. Example command:
+
+    /Linux/bin/samtools merge all_females_sorted.bam bif_female_1_bowtie.map.sorted_mrkdup.bam bif_female_2_bowtie.map.sorted_mrkdup.bam bif_female_3_bowtie.map.sorted_mrkdup.bam
+    /Linux/bin/bedtools genomecov -ibam all_females_sorted.bam -bga -split > all_females_cov.bed
+    awk '$1 == "Scaffold_1_RagTag" && $2 >= 4878700 && $3 <= 4879700 ' all_females_cov.bed > scaffold_1_putative_gene_dupe_coverage_female.bed
+
+
+
+
