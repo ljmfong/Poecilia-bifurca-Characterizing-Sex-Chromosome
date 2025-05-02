@@ -53,20 +53,18 @@ We used **[HISAT2](https://daehwankimlab.github.io/hisat2/)** for our alignment 
     sample_name \t sample_forward.fq.gz \t sample_reverse.fq.gz 
 
 Then run:
-*  Inchworm step:
+##### i. Inchworm step:
 
-
-      trinity2.11.0/Trinity --seqType fq --samples_file picta_reads.txt --CPU 32 --normalize_max_read_cov 50 --max_memory 1500G --no_run_chrysalis >trinity_normalization_inchworm.txt
+    trinity2.11.0/Trinity --seqType fq --samples_file picta_reads.txt --CPU 32 --normalize_max_read_cov 50 --max_memory 1500G --no_run_chrysalis >trinity_normalization_inchworm.txt
       
-*  Chrysalis step:
-
+##### ii. Chrysalis step:
 
       trinity2.11.0/Trinity --seqType fq --samples_file picta_reads.txt --CPU 32 --normalize_max_read_cov 50 --max_memory 1500G --no_distributed_trinity_exec >trinity_chrysalis.txt
-      
-*  Butterfly step:
-
+  
+##### iii. Butterfly step:
 
       trinity2.11.0/Trinity  --seqType fq --samples_file picta_reads.txt --CPU 32 --max_memory 1500G >trinity_full.txt
+
 
 Note the Trinity output format. You will get a '**[Trinity.fasta](https://github.com/trinityrnaseq/trinityrnaseq/wiki/Output-of-Trinity-Assembly)**' output in a new 'trinity_out_dir/' that is created when Trinity is run. Trinity clusters transcripts loosely into 'genes' and contains 'isoforms' of those genes. Custom script is used to determine assembly statistics (**03.assembly_stats.py**). Script takes the trinity output folder, searches for the assembly fasta file and calculates basic stats.
 
