@@ -19,7 +19,7 @@ After aligning all your samples, make a VCF file and filter it using SAMtools _m
 
     /Linux/bin/samtools mpileup -f Poecilia_picta_female_genome.fasta -b list_of_females_sortedbams_full_pathway.txt -o female_unfiltered.vcf
     /usr/bin/java -jar ~/bin/VarScan.v2.3.9.jar mpileup2snp female_unfiltered.vcf --min-coverage 2 --min-ave-qual 20 --min-freq-for-hom 0.90 --p-value 1 --strand-filter 0 -—min-var-free 1e-10 --output-vcf 1 > female_VarScan_filtered.vcf
-        /Linux/bin/samtools mpileup -f Poecilia_picta_female_genome.fasta -b list_of_females_sortedbams_full_pathway.txt -o male_unfiltered.vcf
+    /Linux/bin/samtools mpileup -f Poecilia_picta_female_genome.fasta -b list_of_females_sortedbams_full_pathway.txt -o male_unfiltered.vcf
     /usr/bin/java -jar ~/bin/VarScan.v2.3.9.jar mpileup2snp female_unfiltered.vcf --min-coverage 2 --min-ave-qual 20 --min-freq-for-hom 0.90 --p-value 1 --strand-filter 0 -—min-var-free 1e-10 --output-vcf 1 > male_VarScan_filtered.vcf
 
 ### c. Filtering for ASE SNPs:
