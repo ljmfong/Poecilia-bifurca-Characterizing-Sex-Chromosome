@@ -1,6 +1,6 @@
 # _Poecilia bifurca_ genome assembly and sex chromosome characterization
 
-This directory contains scripts and pipelines used XXXXXX by: xxxx. For further questions, please contact Lydia Fong: ljmfong@zoology.ubc.ca
+For further questions, please contact Lydia Fong: ljmfong@zoology.ubc.ca
 
 The following pipeline is split into 5 parts and the steps can be found in their respective .md files.
 
