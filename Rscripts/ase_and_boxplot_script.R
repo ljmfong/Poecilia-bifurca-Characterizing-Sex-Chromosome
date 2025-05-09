@@ -128,8 +128,6 @@ combo
 #############################################
 
 
-data = read.table(file.choose(),stringsAsFactors=F,header=T,sep=",")
-#Using the file bifurca_all_individs_outfile_rpkm_fc_pos_wLG.txt
 data = read.table(file.choose(),stringsAsFactors=F,header=T,sep="\t")
 #Using files_for_fig1/bifurca_gene_pos_all_rpkm_CLEAN.txt
 
