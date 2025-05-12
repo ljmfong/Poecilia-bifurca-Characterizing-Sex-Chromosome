@@ -128,53 +128,66 @@ combo
 #############################################
 
 
-data = read.table(file.choose(),stringsAsFactors=F,header=T,sep="\t")
-#Using files_for_fig1/bifurca_gene_pos_all_rpkm_CLEAN.txt
 
+data_m = read.table(file.choose(),stringsAsFactors=F,header=F,sep="\t")
+#file: ASE_GATK/males_for_boxplot.txt
+data_f = read.table(file.choose(),stringsAsFactors=F,header=F,sep="\t")
+#file: ASE_GATK/females_for_boxplot.txt
 
-data_autosomes <- subset(data, LG != "LG12")
-data_sexchromo <- subset(data, LG == "LG12")
-data_sexchromo$inv_start <- 34233588
-data_sexchromo$correct_start <- data_sexchromo$inv_start - data_sexchromo$pos 
-data_nonrecombo <- subset(data_sexchromo, correct_start < 30000000)
-data_PAR <- subset(data_sexchromo, correct_start > 30000000)
-data_autoC <- rbind(data_PAR[,1:12], data_autosomes)
+data_m_auto_bxpl <- subset(data_m, V2 != "LG12")
+data_f_auto_bxpl <- subset(data_f, V2 != "LG12")
+data_m_sc_bxpl <- subset(data_m, V2 == "LG12")
+data_f_sc_bxpl <- subset(data_f, V2 == "LG12")
+data_m_sc_bxpl$inv_start <- 34233588
+data_m_sc_bxpl$correct_start <- data_m_sc_bxpl$inv_start - data_m_sc_bxpl$V3
+data_m_nonrecombo <- subset(data_m_sc_bxpl, correct_start < 30000000)
+data_m_PAR <- subset(data_m_sc_bxpl, correct_start > 30000000)
+data_m_autoC <- rbind(data_m_PAR[,1:5], data_m_auto_bxpl)
 
-data_auto_male_expr = log2(data_autoC$avg_mal)
-data_auto_female_expr = log2(data_autoC$avg_fem)
+data_f_sc_bxpl$inv_start <- 34233588
+data_f_sc_bxpl$correct_start <- data_f_sc_bxpl$inv_start - data_f_sc_bxpl$V3
+data_f_nonrecombo <- subset(data_f_sc_bxpl, correct_start < 30000000)
+data_f_PAR <- subset(data_f_sc_bxpl, correct_start > 30000000)
+data_f_autoC <- rbind(data_f_PAR[,1:5], data_f_auto_bxpl)
 
-data_x_male_expr = log2(data_nonrecombo$avg_mal)
-data_x_female_expr = log2(data_nonrecombo$avg_fem)
+data_auto_male_expr <- log2(data_m_autoC$V5)
+data_auto_female_expr <- log2(data_f_autoC$V4)
 
+data_x_male_expr <- log2(data_m_nonrecombo$V5)
+data_x_female_expr <- log2(data_f_nonrecombo$V4)
 
+data_m_nonrecombo <- data_m_nonrecombo[, 1:5]
+data_f_nonrecombo <- data_f_nonrecombo[, 1:5]
+data_m_autoC$chromo <- "auto"
+data_f_autoC$chromo <- "auto"
+data_m_nonrecombo$chromo <- "sexchromo"
+data_f_nonrecombo$chromo <- "sexchromo"
 
-data_autoC$chromo <- "autosome"
-data_nonrecombo$chromo <- "nonrecombo"
+female_test <- rbind(data_f_autoC,data_f_nonrecombo)
+male_test <- rbind(data_m_autoC, data_m_nonrecombo)
 
-commcols <- intersect(names(data_autoC), names(data_nonrecombo))
-all_data_combo <- bind_rows(
-  select(data_autoC, all_of(commcols)),
-  select(data_nonrecombo, all_of(commcols))
-)
-
-chisq_test(table(all_data_combo$chromo, all_data_combo$avg_mal))
+#Average male expression
+chisq_test(table(male_test$chromo, male_test$V5))
 #Output:
 n statistic     p    df method          p.signif
 * <int>     <dbl> <dbl> <int> <chr>           <chr>   
-  1 16639    16554. 0.428 16522 Chi-square test ns  
+  1   688       688 0.482   687 Chi-square test ns   
 
-chisq_test(table(all_data_combo$chromo, all_data_combo$avg_fem))
+chisq_test(table(female_test$chromo, female_test$V4))
 #Output:
 n statistic     p    df method          p.signif
 * <int>     <dbl> <dbl> <int> <chr>           <chr>   
-  1 16639    16537. 0.303 16444 Chi-square test ns 
+  1  5004      5004 0.493  5003 Chi-square test ns   
+
+
 
 par(mar=c(5,6,4,1)+.1)
 boxplot(data_auto_female_expr, data_x_female_expr, data_auto_male_expr, data_x_male_expr,
-        notch=T, outline=F, ylab=expression('Log'[2]*' Expression'),
+        notch=F, outline=F, ylab=expression('Log'[2]*' Expression'),
         names = c("Female A", "Female X", "Male A", "Male X"),
         border=c("red","red", "blue", "blue"),
         col = NULL,
         boxwex = 0.5, boxlwd = 2.5, whisklwd = 2.5,
         cex.lab=1.8, cex.axis = 1.8, cex.main = 3)
+
 
