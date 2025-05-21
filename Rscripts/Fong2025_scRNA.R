@@ -1,37 +1,21 @@
 # Install Packages ---------
 if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
-
 BiocManager::install("SingleCellExperiment")
-
 install.packages('Seurat')
-
 install.packages('grr')
-
 install.packages("https://cran.r-project.org/src/contrib/Archive/Matrix.utils/Matrix.utils_0.9.8.tar.gz", type = "source", repos = NULL)
-
 install.packages('Matrix')
-
 install.packages('dplyr')
-
 install.packages('magrittr')
-
 install.packages("tidyverse")
-
 BiocManager::install("DESeq2")
-
 install.packages("pheatmap")
-
 BiocManager::install("apeglm")
-
 install.packages("RColorBrewer")
-
 BiocManager::install("scran")
-
 BiocManager::install("scuttle")
-
 install.packages("ashr")
-
 BiocManager::install("scater")
 
 # Load Libraries ------------
@@ -56,12 +40,14 @@ library(scuttle)
 library(ashr)
 library(scater)
 library(tidyverse)
+
 # Load and view the data --------
 load("gonad_umap_3_rename_clusters.RData")
 View(gonad_umap_3_rename_clusters@meta.data) # View all the information
 head(gonad_umap_3_rename_clusters) # Summary of information
 
-metadata_gonad_unfilt <- gonad_umap_3_rename_clusters@meta.data # Subset the meta data
+# Subset the meta data ------
+metadata_gonad_unfilt <- gonad_umap_3_rename_clusters@meta.data
 summary(metadata_gonad_unfilt) # Look at the data before filtering
 
 # Output:
@@ -189,7 +175,6 @@ filtered_seurat <- subset(x = gonad_umap_3_rename_clusters,
 
 
 metadata_gonad_filter <- filtered_seurat@meta.data # Subset the meta data
-
 summary(metadata_gonad_filter) # Look at the data after filtering
 
 # Output:
@@ -325,8 +310,7 @@ sce_gonad
 # Keep only male data
 sce_gonad_male <- sce_gonad[, sce_gonad$sex == "Male"]
 
-# Check that I only have male data
-table(sce_gonad_male$sex) 
+table(sce_gonad_male$sex) # Check that I only have male data
 
 # Converting some metadata to factors for grouping, and putting into new column
 # Comparing male-only data to female and male data 
@@ -336,13 +320,11 @@ summary(sce_gonad_male$sample_id) # Only male data
 colData(sce_gonad)$sample_id <- as.factor(colData(sce_gonad)$sample)
 summary(sce_gonad$sample_id) # Data for both sexes
 
-
 colData(sce_gonad_male)$sex_id <- as.factor(colData(sce_gonad_male)$sex)
 summary(sce_gonad_male$sex_id) # Only male data
 
 colData(sce_gonad)$sex_id <- as.factor(colData(sce_gonad)$sex)
 summary(sce_gonad$sex_id) # Data for both sexes
-
 
 colData(sce_gonad_male)$cluster_id <- as.factor(colData(sce_gonad_male)$CellType)
 summary(sce_gonad_male$cluster_id) # Only male data, there should be less female-specific cells (Granulosa), but retain almost all Spermatid and Spermatocytes
@@ -393,7 +375,6 @@ sce_gonad_male <- sce_gonad_male[rowSums(counts(sce_gonad_male)>1)>=10,] # This 
 dim(sce_gonad_male)
 # 8358 21152
 
-
 # Aggregates gene counts (pb_gonad) by summing across cells within each cluster and sample to create a pseudobulk expression matrix
 groups_gonad <- colData(sce_gonad_male)[, c("cluster_id", "sample_id")]
 pb_gonad <- aggregate.Matrix(t(counts(sce_gonad_male)), groupings=groups_gonad, fun="sum")
@@ -435,7 +416,6 @@ table(sce_gonad_male$cluster_id, sce_gonad_male$sample_id)
 #Hemoglobin rich      60      15      13
 
 
-
 # Function to get sample IDs (which are the column names)
 get_sample_ids_gonad <- function(x){
   pb_gonad[[x]] %>% colnames()
@@ -461,7 +441,7 @@ gg_df_gonad <- data.frame(cluster_id=de_cluster_ids_gonad, sample_id=de_samples_
 # Add in info from the ei_gonad dataset (including sample_id, sex, and number of cells), joining with `by = join_by(sample_id)`
 gg_df_gonad <- left_join(gg_df_gonad, ei_gonad[, c("sample_id", "sex_id", "n_cells_gonad")])
 
-# Organize data by keeping only relevant columns (if messy)
+# Organize data by keeping only relevant columns
 metadata_gonad <- gg_df_gonad %>% dplyr::select(cluster_id, sample_id, sex_id, n_cells_gonad)
 
 # Convert the cluster_id to a factor (it is categorical data)
@@ -490,7 +470,7 @@ deseq_normalize_cluster <- function(cluster_name) {
   rownames(cluster_metadata) <- cluster_metadata$sample_id
   cluster_metadata <- cluster_metadata[sample_ids, , drop = FALSE]  # Match order
   
-  # Create DESeq2 object with a dummy design since we won’t run DE
+  # Create DESeq2 object with a dummy design since we won’t run an actual DE
   dds <- DESeqDataSetFromMatrix(countData = counts,
                                 colData = cluster_metadata,
                                 design = ~1)  # no condition modeling
@@ -511,7 +491,6 @@ deseq_normalize_cluster <- function(cluster_name) {
 deseq_norm_list <- map(clusters_gonad, deseq_normalize_cluster)
 names(deseq_norm_list) <- clusters_gonad
 
-
 # Normalize the pseudobulk data using TMM-normalization in edgeR (generates TMM-normalized CPM values) ---------
 # This method will correct for composition bias (for example if one highly expressed gene dominates total counts)
 # and library size differences and it is scaling the counts per million. 
@@ -527,24 +506,24 @@ tmm_normalize_cluster <- function(cluster_name) {
   # TMM normalization
   dge <- calcNormFactors(dge, method = "TMM")
   
-  # Compute CPM (normalized.lib.sizes = TRUE ensures TMM scaling is used)
+  # Compute CPM (normalized.lib.sizes = TRUE for TMM scaling)
   cpm_tmm <- cpm(dge, normalized.lib.sizes = TRUE)
   
-  # Save to CSV (optional)
+  # Save to CSV
   write.csv(cpm_tmm, paste0("TMM_CPM_", cluster_name, ".csv"), quote = FALSE)
   
-  # Return the normalized matrix (optional)
+  # Return the normalized matrix
   return(cpm_tmm)
 }
 
-# Apply the function to all clusters in pb_gonad
+# Apply the function to all clusters
 tmm_cpm_list <- map(clusters_gonad, tmm_normalize_cluster)
 names(tmm_cpm_list) <- clusters_gonad
 
 # Visualize the distribution of the normalized counts --------------
 
 # Load the data (either CPM values from edgeR or normalized counts from DESeq)
-normdata <- read_csv("TMM_CPM_Spermatid.csv")
+normdata <- read_csv("TMM_CPM_Spermatid.csv") # This is CPM values from edgeR
 
 normdata_long <- normdata |>
   pivot_longer(cols = -1, names_to = "sample", values_to = "CPM") |>
