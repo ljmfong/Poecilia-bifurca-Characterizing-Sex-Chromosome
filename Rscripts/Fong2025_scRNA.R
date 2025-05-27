@@ -42,7 +42,7 @@ library(scater)
 library(tidyverse)
 
 # Load and view the data --------
-load("gonad_umap_3_rename_clusters.RData")
+load("gonad_umap_3_rename_clusters.RData") # Seurat S4 object (from Darolti and Mank, 2023)
 View(gonad_umap_3_rename_clusters@meta.data) # View all the information
 head(gonad_umap_3_rename_clusters) # Summary of information
 
@@ -55,17 +55,17 @@ summary(metadata_gonad_unfilt) # Look at the data before filtering
 #Length:28014       Min.   :   500   Min.   :  100.0   Min.   :0.4976   Min.   :   0.00   Min.   :0.00000  
 #Class :character   1st Qu.:   613   1st Qu.:  346.0   1st Qu.:0.8680   1st Qu.:   3.00   1st Qu.:0.00346  
 #Mode  :character   Median :   784   Median :  439.0   Median :0.9060   Median :  11.00   Median :0.01131  
-#Mean   :  1723   Mean   :  610.1   Mean   :0.8949   Mean   :  53.96   Mean   :0.03436  
-#3rd Qu.:  1507   3rd Qu.:  680.0   3rd Qu.:0.9307   3rd Qu.:  59.00   3rd Qu.:0.03510  
-#Max.   :277960   Max.   :12656.0   Max.   :0.9700   Max.   :9381.00   Max.   :0.73017  
+#                   Mean   :  1723   Mean   :  610.1   Mean   :0.8949   Mean   :  53.96   Mean   :0.03436  
+#                   3rd Qu.:  1507   3rd Qu.:  680.0   3rd Qu.:0.9307   3rd Qu.:  59.00   3rd Qu.:0.03510  
+#                   Max.   :277960   Max.   :12656.0   Max.   :0.9700   Max.   :9381.00   Max.   :0.73017  
 
 #cells              sample              sex               tissue            nCount_RNA      nFeature_RNA    
 #Length:28014       Length:28014       Length:28014       Length:28014       Min.   :   500   Min.   :  100.0  
 #Class :character   Class :character   Class :character   Class :character   1st Qu.:   613   1st Qu.:  346.0  
 #Mode  :character   Mode  :character   Mode  :character   Mode  :character   Median :   784   Median :  439.0  
-#Mean   :  1723   Mean   :  610.1  
-#3rd Qu.:  1507   3rd Qu.:  680.0  
-#Max.   :277960   Max.   :12656.0  
+#                                                                            Mean   :  1723   Mean   :  610.1  
+#                                                                            3rd Qu.:  1507   3rd Qu.:  680.0  
+#                                                                            Max.   :277960   Max.   :12656.0  
 
 #nCount_SCT    nFeature_SCT    SCT_snn_res.0.5 seurat_clusters
 #Min.   : 545   Min.   :  16.0   0      : 2967   0      : 2967  
@@ -74,11 +74,11 @@ summary(metadata_gonad_unfilt) # Look at the data before filtering
 #Mean   :1028   Mean   : 488.1   3      : 1732   3      : 1732  
 #3rd Qu.:1271   3rd Qu.: 587.0   4      : 1583   4      : 1583  
 #Max.   :5985   Max.   :1906.0   5      : 1499   5      : 1499  
-#(Other):16404   (Other):16404  
+#                                  (Other):16404   (Other):16404  
 
 # Visuals for different Quality metrics before filtering --------
 # Read here: https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
-# and here: https://bioconductor.github.io/CSAMA-labs/single-cell-rnaseq/singlecell_CSAMA2024.html#normalization
+# and here: https://bioconductor.github.io/CSAMA-labs/single-cell-rnaseq/singlecell_CSAMA2024.html
 # and here: https://bioconductor.org/packages/devel/bioc/vignettes/scuttle/inst/doc/norm.html
 # and here: https://rdrr.io/bioc/scuttle/f/vignettes/overview.Rmd
 
@@ -98,7 +98,7 @@ metadata_gonad_unfilt %>%
 # Visualize the number UMIs/transcripts per cell
 metadata_gonad_unfilt %>% 
   ggplot(aes(color=sample, x=nUMI, fill= sample)) + 
-  geom_density(alpha = 0.2) + 
+  geom_density(alpha = 0.25) + 
   scale_x_log10() + 
   theme_classic(base_size = 14) +
   theme(plot.title = element_text(hjust=0.5, face="bold")) +
@@ -182,17 +182,17 @@ summary(metadata_gonad_filter) # Look at the data after filtering
 #Length:26123       Min.   :  500   Min.   :  250.0   Min.   :0.8001   Min.   :   0.00   Min.   :0.000000  
 #Class :character   1st Qu.:  613   1st Qu.:  353.0   1st Qu.:0.8803   1st Qu.:   3.00   1st Qu.:0.003339  
 #Mode  :character   Median :  778   Median :  452.0   Median :0.9078   Median :   9.00   Median :0.010152  
-#Mean   : 1598   Mean   :  619.6   Mean   :0.9022   Mean   :  44.44   Mean   :0.027827  
-#3rd Qu.: 1477   3rd Qu.:  694.0   3rd Qu.:0.9330   3rd Qu.:  49.00   3rd Qu.:0.029983  
-#Max.   :81176   Max.   :10414.0   Max.   :0.9700   Max.   :1728.00   Max.   :0.199847  
+#                   Mean   : 1598   Mean   :  619.6   Mean   :0.9022   Mean   :  44.44   Mean   :0.027827  
+#                   3rd Qu.: 1477   3rd Qu.:  694.0   3rd Qu.:0.9330   3rd Qu.:  49.00   3rd Qu.:0.029983  
+#                   Max.   :81176   Max.   :10414.0   Max.   :0.9700   Max.   :1728.00   Max.   :0.199847  
 
 #cells              sample              sex               tissue            nCount_RNA     nFeature_RNA    
 #Length:26123       Length:26123       Length:26123       Length:26123       Min.   :  500   Min.   :  250.0  
 #Class :character   Class :character   Class :character   Class :character   1st Qu.:  613   1st Qu.:  353.0  
 #Mode  :character   Mode  :character   Mode  :character   Mode  :character   Median :  778   Median :  452.0  
-#Mean   : 1598   Mean   :  619.6  
-#3rd Qu.: 1477   3rd Qu.:  694.0  
-#Max.   :81176   Max.   :10414.0  
+#                                                                            Mean   : 1598   Mean   :  619.6  
+#                                                                            3rd Qu.: 1477   3rd Qu.:  694.0  
+#                                                                            Max.   :81176   Max.   :10414.0  
 
 #nCount_SCT    nFeature_SCT    SCT_snn_res.0.5 seurat_clusters          CellType    
 #Min.   : 545   Min.   : 112.0   0      : 2955   0      : 2955   Spermatid    :17839  
@@ -201,7 +201,7 @@ summary(metadata_gonad_filter) # Look at the data after filtering
 #Mean   : 992   Mean   : 502.8   3      : 1728   3      : 1728   Endocrine    : 1456  
 #3rd Qu.:1192   3rd Qu.: 600.0   5      : 1497   5      : 1497   Macrophage   : 1290  
 #Max.   :3006   Max.   :1878.0   4      : 1473   4      : 1473   Germ         :  929  
-#(Other):14649   (Other):14649   (Other)      :  493  
+#                                (Other):14649   (Other):14649   (Other)      :  493  
 
 
 # Visuals for different Quality metrics after filtering --------
@@ -292,64 +292,69 @@ ggsave('plots/complexity_geneexpression_filtered.png', width = 8, height = 8, dp
 
 # Subset and organize filtered data --------
 
-counts_gonad_filter <- filtered_seurat@assays$RNA@counts # Subset the count data
+# Unfiltered data
+counts_gonad_unfilter <- filtered_seurat@assays$RNA@counts # Subset the count data 
+metadata_gonad_unfilter$CellType <- factor(filtered_seurat@active.ident) # Add info for cell type
 
-metadata_gonad_filter$CellType <- factor(filtered_seurat@active.ident) # Add info for cell type
-
-gonad_subset <- subset(filtered_seurat, idents="Germ", invert=T) # Removes Germ cell types
-
-counts_gonad <- gonad_subset@assays$RNA@counts # Subset the count data
-
+# Filter data
+gonad_subset <- subset(filtered_seurat, idents="Germ", invert=T) # Removes "Germ" cell types - this is filtered data
+counts_gonad <- gonad_subset@assays$RNA@counts # Subset the count data 
 metadata_gonad <- gonad_subset@meta.data # Subset the meta data
-
 metadata_gonad$CellType <- factor(gonad_subset@active.ident) # Add info for cell type
 
+# Sanity check (should be = TRUE)
+ncol(counts_gonad) == nrow(metadata_gonad) # Same amount of count data and metadata?
+all(colnames(counts_gonad) == rownames(metadata_gonad)) # Do the names match up?
+head(colnames(counts_gonad)) # Do the first set of samples make sense & align - manual inspection
+head(rownames(metadata_gonad)) 
+tail(colnames(counts_gonad)) # Do the last set of samples make sense & align  - manual inspection
+tail(rownames(metadata_gonad))
+
+# Store filtered data in a SingleCellExperiment
 sce_gonad <- SingleCellExperiment(assays=list(counts=counts_gonad), colData=metadata_gonad) # Put together counts and meta data into a named list
 sce_gonad 
 
+# Manual inspection
+colData(sce_gonad)
+
 # Keep only male data
 sce_gonad_male <- sce_gonad[, sce_gonad$sex == "Male"]
-
 table(sce_gonad_male$sex) # Check that I only have male data
 
 # Converting some metadata to factors for grouping, and putting into new column
-# Comparing male-only data to female and male data 
+# Sanity check (comparing male-only data to female and male data) 
 colData(sce_gonad_male)$sample_id <- as.factor(colData(sce_gonad_male)$sample)
 summary(sce_gonad_male$sample_id) # Only male data
-
 colData(sce_gonad)$sample_id <- as.factor(colData(sce_gonad)$sample)
 summary(sce_gonad$sample_id) # Data for both sexes
 
 colData(sce_gonad_male)$sex_id <- as.factor(colData(sce_gonad_male)$sex)
 summary(sce_gonad_male$sex_id) # Only male data
-
 colData(sce_gonad)$sex_id <- as.factor(colData(sce_gonad)$sex)
 summary(sce_gonad$sex_id) # Data for both sexes
 
 colData(sce_gonad_male)$cluster_id <- as.factor(colData(sce_gonad_male)$CellType)
-summary(sce_gonad_male$cluster_id) # Only male data, there should be less female-specific cells (Granulosa), but retain almost all Spermatid and Spermatocytes
-
+summary(sce_gonad_male$cluster_id) # Only male data, there should be less female-specific cells (like Granulosa), but retain almost all Spermatid and Spermatocytes
 colData(sce_gonad)$cluster_id <- as.factor(colData(sce_gonad)$CellType)
 summary(sce_gonad$cluster_id) # Data for both sexes
 
-# Determine the number of clusters (nk) and the cluster names (kids), and the number of samples (ns) and sample names (sids)
+# Determine the cluster ids (kids), number of clusters (nk), sample names (sids), & number of samples (ns). 
 kids_gonad <- purrr::set_names(levels(sce_gonad_male$cluster_id)) # List all possible cluster/ cell-type names
 kids_gonad
-
+#  Spermatid Spermatocytes Granulosa Macrophage Endocrine Monocyte Hemoglobin rich
 nk_gonad <- length(kids_gonad) # How many clusters/ cell-types are there?
 nk_gonad
 # 7
-
 sids_gonad <- purrr::set_names(levels(sce_gonad_male$sample_id)) # List number of samples - 3 M only
 sids_gonad
- 
+# GonadM4   GonadM5   GonadM6 
 ns_gonad <- length(sids_gonad) # How many samples are there?
 ns_gonad
 # 3
 
 # Number of cells per sample
 table(sce_gonad_male$sample_id)
-# GonadM1 GonadM2 GonadM3 
+# GonadM4 GonadM5 GonadM6 
 #  7946    6468    6738  
 
 # Turn named vector into a numeric vector
@@ -362,6 +367,12 @@ m_gonad
 
 # Create sample level metadata by combining the reordered metadata with the number of cells
 ei_gonad <- data.frame(colData(sce_gonad_male)[m_gonad, ], n_cells_gonad, row.names=NULL) %>% select(-"cluster_id")
+  # colData(sce_gonad_male) -> the cell-level metadata from the SingleCellExperiment object sce_gonad_male
+  # [m_gonad, ] -> use a subset of cells
+  # data.frame(...) -> convert metadata rows to a data frame
+  # n_cells_gonad -> append as a column, tells us how many cells for each sample
+  # row.names -> don't carry over row names because we have info already for "seq_folder" and "sample"
+  # %>% select (-"cluster_id") -> remove the column "cluster_id" because we have info already for "CellType"
 
 # Remove genes with low expression 
 dim(sce_gonad_male) # Before filtering for low expression
@@ -382,6 +393,7 @@ pb_gonad <- aggregate.Matrix(t(counts(sce_gonad_male)), groupings=groups_gonad, 
 dim(pb_gonad)
 #  21 8358
 
+# Pseudobulk Expression Matrix
 pb_gonad[1:21, 1:6]
 #21 x 6 sparse Matrix of class "dgCMatrix"
 #                           arl13b zgc:152904 timmdc1 sap18 nid2a rtraf
