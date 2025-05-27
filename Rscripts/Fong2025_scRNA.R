@@ -407,11 +407,13 @@ pb_gonad[1:21, 1:6]
 
 ## Split data by cell type and Transform matrix so that genes are row names and samples are column names
 splitf_gonad <- sapply(stringr::str_split(rownames(pb_gonad), pattern="_", n=2), '[', 1) 
-
 splitf_gonad # Check that each cluster is present in all samples
 
 pb_gonad <- split.data.frame(pb_gonad, factor(splitf_gonad)) %>% lapply(function(u) set_colnames(t(u), stringr::str_extract(rownames(u), "(?<=_)[:alnum:]+")))
-
+  # split.data.frame(...) -> splits the pb_gonad data frame into a list of data frames based on grouping factor splitf_gonad
+  # %>% lapply(...) -> applies a function to each data frame
+  # function(u) -> takes one split data frame, transposes it, then extracts the substring from each row name after the last underscore. Ex: "Spermatid_GonadM4" becomes "GonadM4"
+                                                                    
 str(pb_gonad)
 
 # Number of cells for each cell type and sample
