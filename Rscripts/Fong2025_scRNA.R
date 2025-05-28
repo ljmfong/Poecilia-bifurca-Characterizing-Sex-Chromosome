@@ -501,7 +501,7 @@ deseq_normalize_cluster <- function(cluster_name) {
   return(norm_counts)
 }
 
-# Apply to all clusters
+# Apply to all clusters/cell types, this gives a normalized count value for each male and each cell type
 deseq_norm_list <- map(clusters_gonad, deseq_normalize_cluster)
 names(deseq_norm_list) <- clusters_gonad
 
@@ -530,7 +530,7 @@ tmm_normalize_cluster <- function(cluster_name) {
   return(cpm_tmm)
 }
 
-# Apply the function to all clusters
+# Apply to all clusters/cell types, this gives a normalized count value for each male and each cell type
 tmm_cpm_list <- map(clusters_gonad, tmm_normalize_cluster)
 names(tmm_cpm_list) <- clusters_gonad
 
